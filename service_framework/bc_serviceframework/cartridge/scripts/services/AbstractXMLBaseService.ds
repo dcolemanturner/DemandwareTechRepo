@@ -1,0 +1,108 @@
+/**
+ * Script representation of the account transactions webservice
+ *
+ * If a Service implementation needs to override a method, the overridden method can always be
+ * called using this._super();
+ */
+
+importPackage(dw.system);
+importPackage(dw.object);
+importPackage(dw.util);
+
+importScript("util/libInheritance.ds");
+importScript("util/WebServiceUtils.ds");
+importScript("util/WebserviceConfiguration.ds");
+importScript("services/AbstractBaseService.ds");
+
+// Hack, because vars cannot be imported in DW, only functions
+function getAbstractXMLBaseService() {
+	return AbstractXMLBaseService;
+}
+
+var AbstractBaseService = getAbstractBaseService();  
+
+/**
+ * Base class of XML via HTTP(S) web services.
+ *
+ * @class
+ * @augments AbstractBaseService
+ */
+var AbstractXMLBaseService = AbstractBaseService.extend(
+/** @lends AbstractXMLBaseService.prototype */
+{
+	
+    /**
+     * Create a new XML web service instance.
+     * Set default values for encoding, authentication type and directives.
+     *
+     * Note: Custom encoding needs to be set before calling this constructor 
+     *
+     * @constructs
+     *
+     * @param serviceName {String} A unique name of the service
+     * @param object {Object} The object instance which willl be used as reponse wrapper
+     *
+     */
+	init : function(serviceName : String, object : Object){
+		this._super(serviceName, object);
+		// set encoding to UTF-8 as default
+		if(!this.encoding){
+			this.encoding = "UTF-8";
+		}
+		// BASIC or REQUEST (%username% and %password% can will be replaced with credentials)
+		if(!this.authentication){
+			this.authentication = "BASIC";
+		}
+		this.directives = ['<?xml version="1.0" encoding="'+this.encoding+'"?>'];
+	},
+	
+	/**
+	 * Sends XML request with the configured parameters
+     *
+     * It is assumed that a credentials object is present which defines url, username and password
+	 */
+	executeServiceCall : function() {
+		var httpClient : dw.net.HTTPClient = new dw.net.HTTPClient();
+		this.service = httpClient;
+		this.service.setTimeout(this.configuration.getTimeout());
+		
+		var requestText : String;
+		if (this.request instanceof XML) {
+			requestText = this.request.toXMLString();
+
+			// add control statement
+			requestText = this.directives.join("\n") + "\n" + requestText;
+		}else{
+			// support legacy behaviour
+			requestText = this.request;
+		}
+		
+		Logger.debug("AbstractXMLBaseService: try to connect " + this.serviceName + " calling " + this.credentials.url + " credentials " + this.credentials.getUser() + " / " + this.credentials.getPassword());
+		httpClient.setRequestHeader("Content-Type", "text/xml");
+		if(this.authentication == "BASIC"){
+			httpClient.open("POST", this.credentials.url, this.credentials.getUser(), this.credentials.getPassword());
+		}else{
+			httpClient.open("POST", this.credentials.url);
+			requestText = requestText.replace(/%username%/g, this.credentials.getUser());
+			requestText = requestText.replace(/%password%/g, this.credentials.getPassword());
+		}
+		httpClient.send(requestText, this.encoding);
+		return new XML (httpClient.text);
+	},
+
+	initStatusFromResponse : function(){
+		if(this.service.statusCode == 200){
+			this.status.code = 'OK';
+		}else{
+			this.status.code = 'ERROR';
+			this.status.error = this.service.statusCode;
+		}
+		this.status.message = this.service.statusMessage;
+	},
+	/** logs the full communication in a file*/
+	 logCommunication : function() : Object {
+		  // log request and response message if feature is enabled
+		  this.serviceClientLogger.logRestXML(this.request, this.response, this.serviceName, this.configuration);
+	 }
+
+});

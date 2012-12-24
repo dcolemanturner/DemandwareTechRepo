@@ -1,0 +1,30 @@
+importPackage(dw.system);
+importPackage(dw.util);
+importPackage(dw.net);
+importPackage(dw.web);
+importPackage(dw.crypto);
+
+importScript("app_test:Assert.ds");
+importScript("app_test:TestSuiteBase.ds");
+
+function WeatherServiceTestSuite() {
+	let suite = TestSuiteBase();
+
+	suite.getName = function () {
+		return "HttpService";
+	};
+
+	suite.tests = [{
+		"name": "TEST_NAME_GOES_HERE",
+		"category": "Happy",		
+		"run": function () {
+			//Arrange
+			
+			//Act
+			
+			//Assert			
+		}
+	}];
+
+	return suite;
+};

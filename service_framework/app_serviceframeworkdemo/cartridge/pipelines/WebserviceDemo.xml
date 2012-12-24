@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<?demandware-pipeline version="2.0"?>
+
+<pipeline type="view">
+  <branch basename="Spellchecker">
+    <segment>
+      <node>
+        <start-node name="Spellchecker" secure="false"/>
+        <node-display x="1" y="1"/>
+      </node>
+      <simple-transition/>
+      <node>
+        <decision-node condition-key="CurrentHttpParameterMap.text.submitted" condition-operator="expr"/>
+        <node-display x="0" y="1"/>
+        <branch basename="b2" source-connector="yes">
+          <transition target-connector="in"/>
+          <segment>
+            <node>
+              <pipelet-node pipelet-name="Script" pipelet-set-identifier="bc_api">
+                <config-property key="Transactional" value="false"/>
+                <config-property key="OnError" value="PIPELET_ERROR"/>
+                <config-property key="ScriptFile" value="demo/pipelets/SpellChecker.ds"/>
+                <key-binding alias="ScriptLog" key="ScriptLog"/>
+                <key-binding alias="Result" key="Result"/>
+                <key-binding alias="CurrentHttpParameterMap.text.value" key="Text"/>
+                <key-binding alias="Status" key="Status"/>
+              </pipelet-node>
+              <node-display x="0" y="1"/>
+              <branch basename="b2" source-connector="error">
+                <transition target-connector="in1" target-path="../+1"/>
+              </branch>
+            </node>
+            <transition target-connector="in1" target-path="../+1"/>
+          </segment>
+        </branch>
+      </node>
+      <transition target-connector="in1" target-path="./+1">
+        <transition-display>
+          <bend-point relative-to="source" x="1" y="0"/>
+          <bend-point relative-to="target" x="1" y="0"/>
+        </transition-display>
+      </transition>
+    </segment>
+    <segment>
+      <node>
+        <join-node/>
+        <node-display x="0" y="2"/>
+      </node>
+      <simple-transition>
+        <transition-display>
+          <bend-point relative-to="source" x="0" y="1"/>
+        </transition-display>
+      </simple-transition>
+      <node>
+        <interaction-node transaction-required="false">
+          <template buffered="true" dynamic="false" name="demo/spellchecker.isml"/>
+        </interaction-node>
+        <node-display x="0" y="1"/>
+      </node>
+    </segment>
+  </branch>
+</pipeline>

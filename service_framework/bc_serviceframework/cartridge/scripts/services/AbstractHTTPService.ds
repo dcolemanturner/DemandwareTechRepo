@@ -1,0 +1,66 @@
+importPackage(dw.net);
+
+importScript("bc_serviceframework:services/AbstractBaseService.ds");
+
+function AbstractHTTPService(serviceName, object) {
+    var abstractBaseService = AbstractBaseService(serviceName, object),
+        username = abstractBaseService.configuration.getCredentials().getUser(),
+        password = abstractBaseService.configuration.getCredentials().getPassword(),
+        queryParameters = [];
+
+    abstractBaseService.addQueryParameters = function (name, value) {
+        queryParameters.push({
+            name: name,
+            value: value
+        });
+    };
+
+    abstractBaseService.getRequestType = function () {
+        return "POST";
+    };
+
+    abstractBaseService.executeServiceCall = function () {
+    	var requestType = this.getRequestType(),
+    		url = this.configuration.getCredentials().getUrl(),
+    		cacheTTL = this.configuration.getServiceCacheTTL();
+    	   	
+    	this.serviceClient = new HTTPClient();
+    	this.serviceClient.setTimeout(this.configuration.getTimeout());
+    	if (requestType.toLowerCase() === "get") {
+    		this.serviceClient.enableCaching(cacheTTL);
+    	};
+            
+        for (var i = 0; i < queryParameters.length; i++) {
+            var p = queryParameters[i];
+            if (i === 0) {
+                url += "?" + p.name + "=" + escape(p.value);
+            } else {
+                url += "&" + p.name + "=" + escape(p.value);
+            }
+        };        
+        queryParameters = [];
+        if (username && password) {
+            this.serviceClient.open(requestType, url, username, password);
+        } else {
+            this.serviceClient.open(requestType, url);
+        };
+        if (this.request) {
+            this.serviceClient.send(this.request);
+        } else {
+            this.serviceClient.send();
+        };
+        return this.serviceClient.text;
+    };
+
+    abstractBaseService.initStatusFromResponse = function () {
+        if (this.serviceClient.statusCode === 200) {
+            this.status.code = 'OK';
+        } else {
+            this.status.code = 'ERROR';
+            this.status.error = this.serviceClient.statusCode;
+        }
+        this.status.message = this.serviceClient.statusMessage;
+    };
+
+    return abstractBaseService;
+}
