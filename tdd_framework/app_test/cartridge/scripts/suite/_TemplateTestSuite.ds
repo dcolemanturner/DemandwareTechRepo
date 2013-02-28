@@ -4,8 +4,8 @@ importPackage(dw.net);
 importPackage(dw.web);
 importPackage(dw.crypto);
 
-importScript("Assert.ds");
-importScript("TestSuiteBase.ds");
+importScript("app_test:Assert.ds");
+importScript("app_test:TestSuiteBase.ds");
 
 //Add any importScript() statements here if testing a script
 

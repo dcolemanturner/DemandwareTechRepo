@@ -13,7 +13,17 @@
 					<th>Description</th>
 				</tr>
 				<isscript>
-					var tests = ('tdd' in dw.system.Site.current.preferences.custom) ? JSON.parse(dw.system.Site.current.preferences.custom.tdd) : [];
+					/*
+					Site preference "tddConfig" is an array of pojo objects with the following structure: 
+					[{
+						"name"": "test suite name",
+						"desc": "test suite description",
+						"cartridge": "test suite cartridge"
+					}]
+					
+					NOTE: Each test suite is assumed to be in a folder named "tests" within the top-level "scripts" folder
+					*/
+					var tests = ('tddConfig' in dw.system.Site.current.preferences.custom) ? JSON.parse(dw.system.Site.current.preferences.custom.tddConfig) : [];
 				</isscript>
 				<isloop alias="test" iterator="${tests}">
 					<tr>
